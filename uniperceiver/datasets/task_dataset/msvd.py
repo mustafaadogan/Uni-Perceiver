@@ -259,7 +259,7 @@ class MSVDDataset(VideoDataSet):
                 annoinfo = json.load(BytesIO(self.tcs_loader.client.get(anno_file)))
             else:
                 annoinfo = json.load(open(anno_file))
-            captions_train = sorted( annoinfo['annotations'], key=lambda x: x['id'])
+            captions_train = sorted( annoinfo['images'], key=lambda x: x['id'])
             for data in captions_train:
                 datalist.append(
                     {
@@ -273,7 +273,7 @@ class MSVDDataset(VideoDataSet):
                 annoinfo = json.load(BytesIO(self.tcs_loader.client.get(self.anno_file)))
             else:
                 annoinfo = json.load(open(self.anno_file))
-            captions_train = sorted( annoinfo['annotations'], key=lambda x: x['id'])
+            captions_train = sorted( annoinfo['images'], key=lambda x: x['id'])
             video2caps = defaultdict(list)
             for data in captions_train:
                 video2caps[data['image_id']].append(data['caption'])
@@ -388,7 +388,7 @@ class MSVDDataset(VideoDataSet):
                 video_id = record['video_id']
                 # load video
 
-                video_path = os.path.join(self.feats_folder, self.idx2name[video_id] + '.avi')
+                video_path = os.path.join(self.feats_folder, self.idx2name[video_id] + '.mp4')
                 if self.use_ceph:
                     container = av.open(io.BytesIO(self.tcs_loader.client.get(video_path)))
                 else:
