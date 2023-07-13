@@ -1,6 +1,6 @@
 import torch
 import torch.distributed as dist
-from torch._six import inf
+from torch import inf
 import io
 from timm.utils import get_state_dict
 try:
