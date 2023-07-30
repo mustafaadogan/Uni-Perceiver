@@ -21,14 +21,17 @@ class RetrievalEvaler(object):
         for i in range(batch_num):
             if i == batch_num - 1:
                 b_tfeats = tfeats[i*batch_size:]
+                b_vfeats = vfeats[i*batch_size:]
             else:
                 b_tfeats = tfeats[i*batch_size:(i+1)*batch_size]
+                b_vfeats = vfeats[i*batch_size:(i+1)*batch_size]
 
             with torch.no_grad():
                 scores = (b_tfeats.unsqueeze(1) * vfeats.unsqueeze(0)).sum(dim=-1).cpu().numpy()
+                print(f"Scores:{scores}")
             for score in scores:
                 # rank = np.where((np.argsort(-score) == np.where(labels[count]==1)[0][0]) == 1)[0][0]
-                rank = min([10] + [np.where((np.argsort(-score) == index) == 1)[0][0] for index in np.where(labels[count]==1)[0]])
+                rank = min([10] + [np.where((np.argsort(-score) == index) == 1)[0] for index in np.where(labels[count]==1)[0]])
                 rank_matrix[count] = rank
                 count += 1
 
