@@ -42,7 +42,7 @@ class WeightedBatchSampler(torch.utils.data.sampler.BatchSampler):
         unit_sampler = dict()
         for name, new_cfg in self.task_cfg.items():
             if new_cfg.DATASETS.DATASET_NAME in [
-                    "MSCOCO", "FLICKR", "ImageNet22k", "ImageNet1k", "VG", "VideoDataSet", "K700", 'K400', 'MiT', 'MSVDDataset', 'MSRVTTDataset',
+                    "MSCOCO", "FLICKR", "ImageNet22k", "ImageNet1k", "VG", "VideoDataSet", "K700", 'K400', 'MiT', 'MSVDDataset', 'MSRVTTDataset', 'VLBenchDataset',
                     "RTE", "CoLA", "SST-2", "MRPC", "QQP", "QNLI", "MNLI", "MNLI_Match", "VQA"
             ]:
                 sampler = TrainingSampler(self.dataset.datasets[name])
