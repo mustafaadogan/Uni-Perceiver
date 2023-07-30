@@ -276,8 +276,8 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
                 vfeats.append(outputs["input_feats"])
                 tfeats.append(outputs["tgt_feats"])
 
-        iids = [i[0] for i in ids]
-        cids = [i[1] for i in ids]
+        iids = [i for i in ids]
+        cids = [i for i in ids]
         cids = list(itertools.chain.from_iterable(cids))
         labels = np.expand_dims(cids, axis=1) == np.expand_dims(iids, axis=0)
         labels = labels.astype(int)
