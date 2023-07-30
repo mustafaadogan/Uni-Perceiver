@@ -198,11 +198,12 @@ class TransformerEncoderLayer(nn.Module):
                 key_padding_mask = torch.cat(
                     [torch.zeros((bs, pe_length), dtype=key_padding_mask.dtype, device=key_padding_mask.device), key_padding_mask], dim=1)
 
-
-        x = self.self_attn(x, kv, kv,
-                           attn_mask=attn_mask,
-                           key_padding_mask=key_padding_mask,
-                           need_weights=False)[0]
+        if key_padding_mask != None:
+            key_padding_mask = key_padding_mask.type(torch.cuda.FloatTensor)
+            x = self.self_attn(x, kv, kv,
+                               attn_mask=attn_mask,
+                               key_padding_mask=key_padding_mask,
+                               need_weights=False)[0]
         x = self.drop_path1(self.dropout1(x))
         if self.layer_scale:
             x = self.gamma_1 * x
