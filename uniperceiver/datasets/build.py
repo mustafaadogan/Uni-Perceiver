@@ -206,24 +206,27 @@ def load_shared_targets(cfg, stage='train'):
 
 
 def build_unified_train_loader(cfg, task_cfg, model=None):
-    dataset = UnifiedDataset(cfg, task_cfg, stage="train")
-    batchsampler = WeightedBatchSampler(dataset, cfg, task_cfg)
-    shared_targets = load_shared_targets(cfg)
-    dataloader = torch.utils.data.DataLoader(
-        dataset=dataset,
-        batch_sampler=batchsampler,
-        # sampler=sampler,
-        # batch_size=cfg.DATALOADER.TRAIN_BATCH_SIZE,
-        num_workers=cfg.DATALOADER.NUM_WORKERS,
-        collate_fn=partial(preprocess_batch_collator, shared_targets=shared_targets, cfg=cfg),
-        pin_memory=cfg.DATALOADER.PIN_MEM,
-        worker_init_fn=worker_init_reset_seed,
-        # drop_last=True,
-        prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR, # default: 2
-        persistent_workers=cfg.DATALOADER.NUM_WORKERS>0)
+    if len(cfg.DATASETS.TRAIN) > 0:
+        dataset = UnifiedDataset(cfg, task_cfg, stage="train")
+        batchsampler = WeightedBatchSampler(dataset, cfg, task_cfg)
+        shared_targets = load_shared_targets(cfg)
+        dataloader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            batch_sampler=batchsampler,
+            # sampler=sampler,
+            # batch_size=cfg.DATALOADER.TRAIN_BATCH_SIZE,
+            num_workers=cfg.DATALOADER.NUM_WORKERS,
+            collate_fn=partial(preprocess_batch_collator, shared_targets=shared_targets, cfg=cfg),
+            pin_memory=cfg.DATALOADER.PIN_MEM,
+            worker_init_fn=worker_init_reset_seed,
+            # drop_last=True,
+            prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR, # default: 2
+            persistent_workers=cfg.DATALOADER.NUM_WORKERS>0)
 
 
-    return dataloader
+        return dataloader
+    else:
+        return None
 
 
 def build_standard_train_loader(cfg, model=None):
