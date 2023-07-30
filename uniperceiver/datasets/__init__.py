@@ -13,7 +13,7 @@ from .task_dataset.video_raw import VideoDataSet
 from .task_dataset.vqa import VQADataset
 from .task_dataset.msvd import MSVDDataset
 from .task_dataset.msrvtt import MSRVTTDataset
-from .task_dataet.vlbench import VLBenchDataset
+from .task_dataset.vlbench import VLBenchDataset
 
 from .task_dataset.GLUE import GLUEDataset
 
