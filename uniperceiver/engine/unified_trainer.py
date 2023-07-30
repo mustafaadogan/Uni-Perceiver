@@ -116,19 +116,22 @@ class UnifiedTrainer(TrainerBase):
         self.val_data_loader = build_val_loader(cfg, self.task_cfg)
         self.test_data_loader = build_test_loader(cfg, self.task_cfg)
 
-        if isinstance(self.train_data_loader, list):
-            self.iters_per_epoch_list = [
-                len(loader) for loader in self.train_data_loader
-            ]
-            self._train_data_loader_iter_list = [
-                iter(loader) for loader in self.train_data_loader
-            ]
-
-            self.iters_per_epoch = len(self.train_data_loader[0])
-            self._train_data_loader_iter = iter(self.train_data_loader[0])
+        if self.train_data_loader is not None: 
+            if isinstance(self.train_data_loader, list):
+                self.iters_per_epoch_list = [
+                    len(loader) for loader in self.train_data_loader
+                ]
+                self._train_data_loader_iter_list = [
+                    iter(loader) for loader in self.train_data_loader
+                ]
+    
+                self.iters_per_epoch = len(self.train_data_loader[0])
+                self._train_data_loader_iter = iter(self.train_data_loader[0])
+            else:
+                self.iters_per_epoch = len(self.train_data_loader)
+                self._train_data_loader_iter = iter(self.train_data_loader)
         else:
-            self.iters_per_epoch = len(self.train_data_loader)
-            self._train_data_loader_iter = iter(self.train_data_loader)
+            self.iters_per_epoch = 0            
 
         if self.val_data_loader is not None:
             self.val_evaluator = build_evaluation(cfg,
