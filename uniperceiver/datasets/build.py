@@ -220,7 +220,7 @@ def build_unified_train_loader(cfg, task_cfg, model=None):
             pin_memory=cfg.DATALOADER.PIN_MEM,
             worker_init_fn=worker_init_reset_seed,
             # drop_last=True,
-            prefetch_factor=cfg.DATALOADER.PREFETCH_FACTOR, # default: 2
+            prefetch_factor= None, #cfg.DATALOADER.PREFETCH_FACTOR, # default: 2
             persistent_workers=cfg.DATALOADER.NUM_WORKERS>0)
 
 
