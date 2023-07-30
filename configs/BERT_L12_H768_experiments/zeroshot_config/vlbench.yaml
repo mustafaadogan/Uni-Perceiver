@@ -49,7 +49,7 @@ TASKS:
       LOSS_WEIGHT: 0.5
       REDUCTION: 'mean'
     INFERENCE:
-      NAME: 'COCOEvaler'
+      NAME: 'RetrievalEvaler'
       VOCAB: 'CLIP'
       ID_KEY: 'image_id'
       VALUE: 'caption'
