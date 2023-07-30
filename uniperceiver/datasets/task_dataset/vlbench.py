@@ -462,7 +462,7 @@ class VLBenchDataset(VideoDataSet):
                 'target_sample': [],
             }
 
-            if self.stage == 'train' and record['caption'] is not None:
+            if record['caption'] is not None:
                 caption = record['caption']
                 caption = caption + " <|endoftext|>"
 
