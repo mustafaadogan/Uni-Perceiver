@@ -276,8 +276,8 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
                 vfeats.append(outputs["input_feats"])
                 tfeats.append(outputs["tgt_feats"])
 
-        iids = [i for i in ids]
-        cids = [i for i in ids]
+        iids = [i[0] for i in ids]
+        cids = [i[1] for i in ids]
         cids = list(itertools.chain.from_iterable(cids))
         labels = np.expand_dims(cids, axis=1) == np.expand_dims(iids, axis=0)
         labels = labels.astype(int)
@@ -285,7 +285,7 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
         tfeats = torch.cat(tfeats, dim=0)
 
         ret.update(evaluator.eval(vfeats, tfeats, labels, 't2i'))
-        ret.update(evaluator.eval(tfeats, vfeats, labels.T, 'i2t'))
+        #ret.update(evaluator.eval(tfeats, vfeats, labels.T, 'i2t'))
         model.train()
         comm.synchronize()
         return ret
