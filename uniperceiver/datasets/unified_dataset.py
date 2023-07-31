@@ -30,7 +30,7 @@ class UnifiedDataset:
         datasets = dict()
         for name, new_cfg in self.task_cfg.items():
             datasets[name] = self.build_unit_dataset(new_cfg,
-                                                     new_cfg.DATASETS.TRAIN,
+                                                     new_cfg.DATASETS.TEST,
                                                      stage=stage)
         self.datasets = datasets
 
