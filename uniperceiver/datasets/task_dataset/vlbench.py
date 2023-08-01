@@ -265,12 +265,37 @@ class VLBenchDataset(VideoDataSet):
             annoinfo = json.load(open(anno_file))
 
         for data in annoinfo:
+
             datalist.append(
                 {
-                    'video_id': data,#annoinfo[data]['video_file'],
+                    'video_id': data,
                     'caption':  annoinfo[data]['caption']
                 }
             )
+
+            for foil in annoinfo[data]["foils"]:
+                datalist.append(
+                    {
+                        'video_id': data,
+                        'caption':  foil
+                    }
+                )
+            
+            datalist.append(
+                {
+                    'video_id': data,
+                    'caption':  annoinfo[data]["proficiency"]['caption']
+                }
+            )
+
+            for foil in annoinfo[data]["proficiency"]["foils"]:
+                datalist.append(
+                    {
+                        'video_id': data,
+                        'caption':  foil
+                    }
+                )
+
 
         return datalist
 
@@ -529,18 +554,39 @@ class VLBenchDataset(VideoDataSet):
 
 
                 elif self.task_type == 'video_retrieval':
-                    ret.update({
-                    'target_sample': [{
-                        'data'        : [np.array(caption_tokens, dtype=np.int64)],
-                        'modality'    : 'text',
-                        'data_type'  : 'target',
-                        'invalid_mask':  None,
-                        'sample_info' : {}
-                    }],
-                    'target_idx'   : [],
-                    'target_set'   : [],
-                    'task_info'    : copy.deepcopy(self.task_info)
-                })
+                    captions = [caption +  " <|endoftext|>" for caption in  record['caption']]
+                    caption_tokens_raw = [ self.tokenizer.encode(caption) for caption in captions]
+
+                    caption_tokens = [ caption_token[:(self.max_seq_len - 1)] + [caption_token[-1]]
+                                    if len(caption_token) > self.max_seq_len else caption_token
+                                    for caption_token in caption_tokens_raw ]
+                    ret.update(
+                        {
+                            'input_sample': [{
+                                    'data'        : video_data, 'invalid_mask': None, 'modality': 'video', 'data_type': 'input',
+                                    'sample_info' : {
+                                        'id'      : (video_id, [video_id] * len(caption_tokens)),
+                                        'path'    : video_path,
+                                        'num_views':num_frames,
+                                        'cat_along_first_dim': True,
+                                    }
+                                }],
+                            'target_sample': [{
+                                    'data'        : [np.array(caption_token, dtype=np.int64)
+                                                    for caption_token in caption_tokens],
+                                    'modality'    : 'text',
+                                    'invalid_mask': None,
+                                    'data_type'   : 'target',
+                                    'sample_info' : {
+                                        'sample_alone': True,
+                                    }
+
+                                }],
+                            'target_idx'          : [],
+                            'target_set'          : [],
+                            'task_info'           : copy.deepcopy(self.task_info)
+                        }
+                    )
                 else:
                     raise NotImplementedError
             else:
