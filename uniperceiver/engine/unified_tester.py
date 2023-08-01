@@ -284,7 +284,7 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
         vfeats = torch.cat(vfeats, dim=0)
         tfeats = torch.cat(tfeats, dim=0)
 
-        ret.update(evaluator.eval(vfeats, tfeats, labels, 't2i'))
+        evaluator.eval(vfeats, tfeats, labels, 't2i')
         #ret.update(evaluator.eval(tfeats, vfeats, labels.T, 'i2t'))
         model.train()
         comm.synchronize()
