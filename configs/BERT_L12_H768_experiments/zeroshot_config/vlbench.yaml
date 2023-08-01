@@ -22,8 +22,8 @@ TASKS:
       DATASET_NAME: 'VLBenchDataset'
       # TARGET_SET: ['Vocab_Word']
     DATALOADER:
-      TRAIN_BATCH_SIZE: 6
-      TEST_BATCH_SIZE: 6
+      TRAIN_BATCH_SIZE: 1
+      TEST_BATCH_SIZE: 1
       NUM_WORKERS: 0
       FEATS_FOLDER: 'vlbench_dataset/videos'
       ANNO_FOLDER:  'vlbench_dataset/annotations_new'
