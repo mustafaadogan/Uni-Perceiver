@@ -5,57 +5,52 @@ import numpy as np
 import torch
 from uniperceiver.config import configurable
 from .build import EVALUATION_REGISTRY
+import json
 
 @EVALUATION_REGISTRY.register()
 class RetrievalEvaler(object):
     def __init__(self, cfg, annfile, output_dir,):
         super(RetrievalEvaler, self).__init__()
         self.eval_bs = cfg.INFERENCE.EVAL_BS
+        self.anno_file = cfg.INFERENCE.TEST_ANNFILE
+        self.output_dir = output_dir
         pass
 
     def eval(self, vfeats, tfeats, labels, prefix=None):
         count = 0
+
         batch_size = self.eval_bs
-        batch_num = tfeats.size(0) // batch_size
-        rank_matrix = np.ones((tfeats.size(0))) * vfeats.size(0)
+        batch_num = vfeats.size(0) // batch_size
+        batch_num_t = tfeats.size(0) // batch_num
+
+        scores = []
+
         for i in range(batch_num):
             if i == batch_num - 1:
-                b_tfeats = tfeats[i*batch_size:]
+                b_tfeats = tfeats[i*batch_num_t:]
                 b_vfeats = vfeats[i*batch_size:]
             else:
-                b_tfeats = tfeats[i*batch_size:(i+1)*batch_size]
+                b_tfeats = tfeats[i*batch_num_t:(i+1)*batch_num_t]
                 b_vfeats = vfeats[i*batch_size:(i+1)*batch_size]
 
             with torch.no_grad():
-                scores = (b_tfeats.unsqueeze(1) * vfeats.unsqueeze(0)).sum(dim=-1).cpu().numpy()
-                print(f"Scores:{scores}")
-            for score in scores:
-                # rank = np.where((np.argsort(-score) == np.where(labels[count]==1)[0][0]) == 1)[0][0]
-                rank = min([10] + [np.where((np.argsort(-score) == index) == 1)[0] for index in np.where(labels[count]==1)[0]])
-                rank_matrix[count] = rank
-                count += 1
+                score = (b_tfeats.unsqueeze(1) * b_vfeats.unsqueeze(0)).sum(dim=-1).sum(dim=0).cpu().numpy()
+                scores.append(float(score[0]))
+                print(score)
+        
+        annoinfo = json.load(open(self.anno_file))
+        main_task_results = {}
+        prof_results = {}
+        consumed_idx = 0
 
-        r1 = 100.0 * np.sum(rank_matrix < 1) / len(rank_matrix)
-        r5 = 100.0 * np.sum(rank_matrix < 5) / len(rank_matrix)
-        r10 = 100.0 * np.sum(rank_matrix < 10) / len(rank_matrix)
+        for key in annoinfo.keys():
+            main_task_results[key] = {"scores" : scores[consumed_idx : consumed_idx + 1 + len(annoinfo[key]["foils"])]}
+            consumed_idx = 1 + len(annoinfo[key]["foils"])
+            prof_results[key] = {"scores" : scores[consumed_idx : consumed_idx + 1 + len(annoinfo[key]["proficiency"]["foils"])]}
+            consumed_idx = 1 + len(annoinfo[key]["proficiency"]["foils"])
+        
+        with open(f"{self.output_dir}/Main_Task_Results.json", "w") as task_outfile:
+            json.dump(main_task_results, task_outfile, indent=4)
 
-        rmean = (r1+r5+r10)/3
-
-        # medr = np.floor(np.median(rank_matrix) + 1)
-        # meanr = np.mean(rank_matrix) + 1
-        if prefix is None:
-            return {
-                "r1": r1,
-                "r5": r5,
-                "r10": r10,
-                "rmean": rmean,
-                # "meanr": meanr
-            }
-        else:
-            return {
-                prefix+ "-r1": r1,
-                prefix+ "-r5": r5,
-                prefix+ "-r10": r10,
-                prefix+ "-rmean": rmean,
-                # prefix+ "-meanr": meanr
-            }
+        with open(f"{self.output_dir}/Prof_Results.json", "w") as prof_outfile:
+            json.dump(prof_results, prof_outfile, indent=4)
