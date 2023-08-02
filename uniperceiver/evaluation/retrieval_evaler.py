@@ -36,7 +36,6 @@ class RetrievalEvaler(object):
             with torch.no_grad():
                 score = (b_tfeats.unsqueeze(1) * b_vfeats.unsqueeze(0)).sum(dim=-1).sum(dim=0).cpu().numpy()
                 scores.append(float(score[0]))
-                print(score)
         
         annoinfo = json.load(open(self.anno_file))
         main_task_results = {}
