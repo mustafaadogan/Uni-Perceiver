@@ -28,3 +28,4 @@ tqdm==4.63.0
 transformers==4.19.1
 cloudpickle
 protobuf==3.19
+gdown
