@@ -12,20 +12,15 @@ class RetrievalEvaler(object):
         super(RetrievalEvaler, self).__init__()
         pass
 
-    def eval(self, vfeats, tfeats, index):
+    def eval(self, vfeats, tfeats):
 
-        similarity_scores_dict = {}
+        score = 0
 
         for text_index in range(tfeats.size()[0]):
             relevant_video_features = vfeats[0]
             text_feature = tfeats[text_index]
 
             with torch.no_grad():
-                score = (text_feature * relevant_video_features).sum(dim=-1).cpu().numpy()
-
-            if index in similarity_scores_dict.keys():
-                    similarity_scores_dict[index] += float(score)
-            else:
-                similarity_scores_dict[index] = float(score)
-
-        return similarity_scores_dict[index]
+                score += (text_feature * relevant_video_features).sum(dim=-1).cpu().numpy()
+                
+        return score
