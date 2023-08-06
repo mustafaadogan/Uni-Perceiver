@@ -269,14 +269,12 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
                 data = move_to_cuda(data)
                 # task_type = data['task_info']['task_type']
 
-                ids_local = [si['id'] for si in data['input_sample_list'][0]['sample_info']]
                 with autocast(amp_fp16):
                     outputs = model(data)
 
                 vfeats = outputs["input_feats"]
                 tfeats = outputs["tgt_feats"]
-                iids = [i[0] for i in ids_local]
-                results.append(evaluator.eval(vfeats, tfeats, iids[0]))
+                results.append(evaluator.eval(vfeats, tfeats))
           
         annoinfo = json.load(open(cfg.INFERENCE.TEST_ANNFILE))
         main_task_results = {}
