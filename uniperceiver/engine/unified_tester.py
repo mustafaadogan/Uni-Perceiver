@@ -13,6 +13,7 @@ import uniperceiver.utils.comm as comm
 from timm.utils import accuracy
 from collections import defaultdict, deque
 import torch.distributed as dist
+import json
 
 
 class SmoothedValue(object):
@@ -259,9 +260,8 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
             return None
         ret = {}
         model.eval()
-        ids = []
-        vfeats = []
-        tfeats = []
+        results = []
+	
         with torch.no_grad():
             for data in tqdm.tqdm(test_data_loader):
                 if task is not None:
@@ -272,20 +272,42 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
                 ids_local = [si['id'] for si in data['input_sample_list'][0]['sample_info']]
                 with autocast(amp_fp16):
                     outputs = model(data)
-                ids += ids_local
-                vfeats.append(outputs["input_feats"])
-                tfeats.append(outputs["tgt_feats"])
 
-        iids = [i[0] for i in ids]
-        cids = [i[1] for i in ids]
-        cids = list(itertools.chain.from_iterable(cids))
-        labels = np.expand_dims(cids, axis=1) == np.expand_dims(iids, axis=0)
-        labels = labels.astype(int)
-        vfeats = torch.cat(vfeats, dim=0)
-        tfeats = torch.cat(tfeats, dim=0)
+                vfeats = outputs["input_feats"]
+                tfeats = outputs["tgt_feats"]
+                iids = [i[0] for i in ids_local]
+                results.append(evaluator.eval(vfeats, tfeats, iids[0]))
+          
+        annoinfo = json.load(open(cfg.INFERENCE.TEST_ANNFILE))
+        main_task_results = {}
+        prof_results = {}
+        consumed_idx = 0
 
-        evaluator.eval(vfeats, tfeats, labels, 't2i')
-        #ret.update(evaluator.eval(tfeats, vfeats, labels.T, 'i2t'))
+        for key in annoinfo.keys():
+            main_task_results[key] = {"scores" : []}
+            prof_results[key] = {"scores" : []}
+            
+            caption_score = results[consumed_idx]
+            
+            main_task_results[key]["scores"].append(caption_score)
+            consumed_idx += 1
+            
+            for i in range(len(annoinfo[key]["foils"])):
+                main_task_results[key]["scores"].append(results[consumed_idx])
+                consumed_idx += 1
+                          
+            prof_results[key]["scores"].append(caption_score)
+            
+            for i in range(len(annoinfo[key]["proficiency"]["foils"])):
+                prof_results[key]["scores"].append(results[consumed_idx])
+                consumed_idx += 1
+     
+        with open(f"{cfg.OUTPUT_DIR}/Main_Task_Results.json", "w") as task_outfile:
+            json.dump(main_task_results, task_outfile, indent=4)
+
+        with open(f"{cfg.OUTPUT_DIR}/Prof_Results.json", "w") as prof_outfile:
+            json.dump(prof_results, prof_outfile, indent=4)
+            
         model.train()
         comm.synchronize()
         return ret
