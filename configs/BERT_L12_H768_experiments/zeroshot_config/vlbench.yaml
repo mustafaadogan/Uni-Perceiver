@@ -54,7 +54,7 @@ TASKS:
       ID_KEY: 'image_id'
       VALUE: 'caption'
       VAL_ANNFILE: ''
-      TEST_ANNFILE: 'vlbench_dataset/annotations_new/Semantic_Role_Labelling_Data_v1.json'
+      TEST_ANNFILE: 'vlbench_dataset/annotations_new/Annotations_File_Name.json'
       GENERATION_MODE: True
 
 ENGINE:
