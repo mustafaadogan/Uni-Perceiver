@@ -91,6 +91,7 @@ class VLBenchDataset(VideoDataSet):
         self.use_clip_tokenizer = self.tokenizer_name == 'clip'
         # for index_maping
         self.idx2name = dict()
+        self.idx2time = dict()
         self.name2idx = dict()
 
         self.use_ceph = use_ceph
@@ -145,6 +146,7 @@ class VLBenchDataset(VideoDataSet):
         for videoinfo_key in videoinfo:
             video_name = videoinfo[videoinfo_key]["video_file"]
             self.idx2name[videoinfo_key] = video_name
+            self.idx2time[videoinfo_key] = (videoinfo[videoinfo_key]["start_time"], videoinfo[videoinfo_key]["end_time"])
             self.name2idx[video_name] = videoinfo_key
         self.random_mask = random_mask
         pass
@@ -398,6 +400,8 @@ class VLBenchDataset(VideoDataSet):
             record = self.video_list[idx].as_py()
             record = copy.deepcopy(record)
             video_id = record['video_id']
+            start_second = self.idx2time[video_id][0]
+            end_second = self.idx2time[video_id][1]
             # load video
 
             video_path = os.path.join(self.feats_folder, self.idx2name[video_id] + '.mp4')
@@ -410,7 +414,12 @@ class VLBenchDataset(VideoDataSet):
             # container.streams.video[0].thread_type = "AUTO"
             stream = container.streams.video[0]
             total_frames = stream.frames
-            fps = float(container.streams.video[0].average_rate)
+            fps = min(self.cfg.DATALOADER.FRAMES_PER_CLIP, float(container.streams.video[0].average_rate))
+            
+            start_frame = int(start_second * fps)
+            end_frame = min(int(end_second * fps), total_frames - 1)  # Ensure not exceeding total frames
+
+            
 
             if total_frames == 0:
                 # it returns 0 if not know, but that doesn't mean the video is null
@@ -429,48 +438,30 @@ class VLBenchDataset(VideoDataSet):
                 # let's try another one
                 # index = random.randint(0, len(self.data_list) - 1)
                 # record = self.data_list[index]
-                # continue
-
-            if self.stage=='train':
-                indices = [self._sample_indices(total_frames, fps)]
-            else:
-                indices = self._get_val_indices(total_frames, fps)
-
-            all_index = set()
-            for index in indices:
-                all_index = all_index.union(set(index))
-
-            start_index = min(all_index)
-            num_frames = len(all_index)
+                # continue      
 
             images = dict()
 
-            fetched = 0
-
             for frame in container.decode(stream):
-                if frame.index not in all_index or frame.index in images:
+                if frame.index < start_frame:
                     continue
-                images[frame.index] = frame.to_rgb().to_image()
-                last = frame.index
-                fetched += 1
-                if fetched == num_frames:
+                if frame.index > end_frame:
                     break
 
+                images[frame.index] = frame.to_rgb().to_image()
+                last = frame.index
+
             container.close()
-
+            
+            
             video_data = list()
-            for ind in indices:
-                seq = list()
-                for i in ind:
-                    if i in images:
-                        seq.append(images[i])
-                    else:
-                        seq.append(images[last])
-                video_data.append(self.transform(seq))
-            video_data = torch.cat(video_data, dim=0)
 
-            if video_data.dim() == 4:
-                video_data.unsqueeze_(0) # in case there is only one frame
+            for ind in range(start_frame, end_frame + 1):
+                if ind in images:
+                    video_data.append(self.transform([images[ind]]))
+
+            num_frames = len(video_data)
+            video_data = torch.cat(video_data, dim=0)
 
             ret = {
                 'input_sample':[
