@@ -249,12 +249,8 @@ class VLBenchDataset(VideoDataSet):
                 self.cache_dir,
                 "vlbench_raw_caption_retrieval_%s_%s_%d.pkl" % (self.tokenizer_name, self.stage, self.max_seq_len)
             )
-            if not os.path.exists(os.path.dirname(cache_path)):
-                os.makedirs(os.path.dirname(cache_path))
-            if not os.path.exists(cache_path):
-                datalist = self.load_raw_data(cfg, self.anno_file)
-                pickle.dump(datalist, open(cache_path, "wb"))
-            datalist = pickle.load(open(cache_path, "rb"))
+            
+            datalist = self.load_raw_data(cfg, self.anno_file)
             total_datalist = datalist
         return total_datalist
 
@@ -282,13 +278,6 @@ class VLBenchDataset(VideoDataSet):
                         'caption':  foil
                     }
                 )
-            
-            datalist.append(
-                {
-                    'video_id': data,
-                    'caption':  annoinfo[data]["proficiency"]['caption']
-                }
-            )
 
             for foil in annoinfo[data]["proficiency"]["foils"]:
                 datalist.append(
