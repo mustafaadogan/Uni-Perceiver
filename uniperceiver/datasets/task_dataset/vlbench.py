@@ -278,7 +278,14 @@ class VLBenchDataset(VideoDataSet):
                         'caption':  foil
                     }
                 )
-
+            
+            datalist.append(
+                {
+                    'video_id': data,
+                    'caption':  annoinfo[data]['proficiency']['caption']
+                }
+            )
+            
             for foil in annoinfo[data]["proficiency"]["foils"]:
                 datalist.append(
                     {
