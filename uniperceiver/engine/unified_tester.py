@@ -294,7 +294,9 @@ def test_retrieval(cfg, model, test_data_loader, evaluator, epoch, amp_fp16, tas
                 main_task_results[key]["scores"].append(results[consumed_idx])
                 consumed_idx += 1
                           
-            prof_results[key]["scores"].append(caption_score)
+            prof_caption_score = results[consumed_idx]
+	    prof_results[key]["scores"].append(prof_caption_score)
+	    consumed_idx += 1
             
             for i in range(len(annoinfo[key]["proficiency"]["foils"])):
                 prof_results[key]["scores"].append(results[consumed_idx])
